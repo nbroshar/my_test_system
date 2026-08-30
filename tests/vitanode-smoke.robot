@@ -30,5 +30,5 @@ Scheduler Keeps Toggling
     Execute Command             sysbus LoadELF @${ELF}
     Create Terminal Tester      ${UART}
     Start Emulation
-    Wait For Line On Uart       LED ON       timeout=10
+    Wait For Line On Uart       BANANA       timeout=10
     Wait For Line On Uart       LED ON       timeout=10
