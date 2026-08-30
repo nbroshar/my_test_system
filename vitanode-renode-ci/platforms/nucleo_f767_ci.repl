@@ -1,0 +1,32 @@
+// Minimal STM32F767 model for CI smoke tests — only what a blink touches.
+// Version-proof: loads on stable and nightly Renode alike (no exotic peripherals).
+// For richer simulation, swap in the full nightly board file: nucleo_f767zi.repl
+
+cpu: CPU.CortexM @ sysbus
+    cpuType: "cortex-m7"
+    nvic: nvic
+
+nvic: IRQControllers.NVIC @ sysbus 0xE000E000
+    systickFrequency: 216000000
+    IRQ -> cpu@0
+
+flash: Memory.MappedMemory @ sysbus 0x08000000
+    size: 0x200000
+
+sram: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x80000
+
+// RCC region backed by memory so clock-enable writes are absorbed cleanly.
+rcc: Memory.MappedMemory @ sysbus 0x40023800
+    size: 0x400
+
+usart3: UART.STM32F7_USART @ sysbus 0x40004800
+    frequency: 216000000
+    IRQ -> nvic@39
+
+gpioPortB: GPIOPort.STM32_GPIOPort @ sysbus <0x40020400, +0x400>
+
+GreenLED: Miscellaneous.LED @ gpioPortB 0
+
+gpioPortB:
+    0 -> GreenLED@0

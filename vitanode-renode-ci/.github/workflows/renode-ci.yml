@@ -1,0 +1,46 @@
+name: Renode CI (Stage 2 gate)
+
+# Replaces the Arm AVH check. Every PR builds the firmware and runs it in Renode;
+# the Robot test asserts USART3 output and exits non-zero on failure.
+# No Arm licence, no AVH/Corellium account, no self-hosted runner.
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  renode-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi
+
+      - name: Build firmware
+        run: make -C firmware
+
+      - name: Install Renode
+        run: |
+          RENODE_VERSION=1.16.1
+          wget -q "https://github.com/renode/renode/releases/download/v${RENODE_VERSION}/renode-${RENODE_VERSION}.linux-portable-dotnet.tar.gz"
+          mkdir -p renode
+          tar xzf renode-*.linux-portable-dotnet.tar.gz -C renode --strip-components=1
+          pip install -r renode/tests/requirements.txt
+
+      - name: Run Renode smoke test
+        run: ./renode/renode-test tests/vitanode-smoke.robot
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: renode-results
+          path: |
+            robot_output.xml
+            log.html
+            report.html
+          if-no-files-found: ignore
